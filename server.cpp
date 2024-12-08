@@ -6,9 +6,9 @@
 #include <thread>
 #include <arpa/inet.h>
 #include "ip.h"
-#include "dbms.h"
-#include "DBinit.h"
-#include "structures.h"
+#include "market.h"
+#include "dbms/DBinit.h"
+#include "dbms/structures.h"
 
 #include <map>
 
@@ -40,7 +40,7 @@ void requestProcessing(const int clientSocket, const sockaddr_in& clientAddress)
             continue;
         }
         lock_guard<mutex> guard(userMutex);
-        string result = dbms(receive, schema);
+        string result = market(receive, schema);
         send(clientSocket, result.c_str(), result.size(), 0);
     }
     close(clientSocket);
@@ -79,21 +79,18 @@ void startServer() {
         }
         cout << "Client[" << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << "] was connected" << endl;
         thread(requestProcessing, clientSocket, clientAddress).detach();
-        //string debugServerStopper; //Для остановки работы сервера
-        //getline(cin, debugServerStopper);
-        //if (debugServerStopper == "-1") { break; }
     }
     close(server);
 }
 
 int main() {
     dbInit(schema);   // Функция создания и проверки наличия БД
-    cout << "Database ready. \n";
+    cout << "Market database ready. \n";
     startServer();
     return 0;
 }
 /*
 g++ client.cpp -o client
-g++ server.cpp dbms.cpp DBinit.cpp syntaxCheck.cpp actions.cpp -o server
+g++ server.cpp dbms/dbms.cpp dbms/DBinit.cpp dbms/syntaxCheck.cpp dbms/actions.cpp -o server
 
 */

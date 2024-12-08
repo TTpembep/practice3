@@ -1,6 +1,4 @@
-#include "DBinit.h"
-#include "syntaxCheck.h"
-#include "actions.h"
+#include "dbms.h"
 
 string dbms(string query, Schema schema){
     cout << "action log+\n";

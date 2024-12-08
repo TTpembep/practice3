@@ -25,9 +25,11 @@ void dbInit(Schema& schema){  //Основная функция создания
       }else {
         ofstream fout;
         fout.open (schema.name+"/"+tableName+"/"+"1.csv"); 
-        fout << tableName+"_" <<"pk" <<",";
+        if (tableName != "user_lot"){
+          fout << tableName+"_" <<"id" <<",";
+        }
         int i=0;
-    
+
         for( const auto& column : columns) {
           fout << column.get<string>();
           if (i<columns.size()-1) fout << ",";
