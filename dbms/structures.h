@@ -95,6 +95,27 @@ struct fList {  //Структура данных для односвязанн�
         }
         return p;
     }
+    void remove_index(int index) {   // Удаление элемента по индексу
+        if (head == nullptr) {
+            return;
+        }
+        if (index == 0) {
+            Node* temp = head;
+            head = head->next;
+            delete temp;
+            return;
+        }
+        Node* current = head;
+        for (int i = 0; current != nullptr && i < index - 1; i++) {
+            current = current->next;
+        }
+        if (current == nullptr || current->next == nullptr) {
+            return;
+        }
+        Node* temp = current->next;
+        current->next = current->next->next;
+        delete temp;
+    }
 };
 struct Schema { //Структура данных для хранения информации о схеме
     string name;
@@ -110,6 +131,10 @@ struct SQLQuery {
     bool isRight;   //Проверка синтаксиса
 
     string message; //Запись сообщения для отправки клиенту
+};
+struct Config { //Структура данных конфигурации сервера
+    string ip;
+    int port;
 };
 
 #endif

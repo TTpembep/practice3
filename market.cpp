@@ -1,6 +1,6 @@
 #include "market.h"
 
-string market(string query, Schema schema){ //Получает строку 
+string market(string message, Schema schema){ //Получает строку 
     
     string parsedQuery;
     //Делает что-то 

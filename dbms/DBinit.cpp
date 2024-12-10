@@ -60,7 +60,19 @@ void dbInit(Schema& schema){  //Основная функция создания
           fout << "0";
           fout.close();
           cout << "Created "+schema.name+"/"+tableName+"/"+tableName+"_lock" << endl;
+        }fin.close();
+        if (tableName == "pair"){
+          fin.open(schema.name+"/"+tableName+"/"+tableName+"_cfgStatus");
+          if (fin.good()){
+            cout << schema.name+"/"+tableName+"/"+tableName+"_cfgStatus is already exist!" << endl;
+          }else{
+            ofstream fout;
+            fout.open(schema.name+"/"+tableName+"/"+tableName+"_cfgStatus");
+            fout << "0";
+            fout.close();
+            cout << "Created "+schema.name+"/"+tableName+"/"+tableName+"_cfgStatus" << endl;
           }fin.close();
+        }
         }   
     }
 }

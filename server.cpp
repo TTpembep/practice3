@@ -6,15 +6,16 @@
 #include <thread>
 #include <arpa/inet.h>
 #include "ip.h"
-#include "market.h"
 #include "dbms/DBinit.h"
 #include "dbms/structures.h"
-
+#include "config.h"
+#include "market.h"
 #include <map>
 
 using namespace std;
 
-Schema schema;  //Глобальная переменная для обработки бд
+Schema schema;  //Глобальная структура для обработки бд
+Config config; //Глобальная конфигурация сервера
 mutex userMutex;  //Глобальный мьютекс для защиты доступа к schema
 
 map<int, string> clientPorts;  // Хранилище для идентификации клиентов по портам
@@ -55,8 +56,10 @@ void startServer() {
     }
     sockaddr_in address{}; // IPV4 protocol structure
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr(IP); // any = 0.0.0.0
-    address.sin_port = htons(7432); // host to net short
+    //address.sin_addr.s_addr = inet_addr(IP); // any = 0.0.0.0
+    address.sin_addr.s_addr = inet_addr(config.ip.c_str());
+    address.sin_port = htons(config.port); // host to net short
+
     if (bind(server, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) < 0) {
         cerr << "Binding error" << endl;
         close(server);
@@ -85,12 +88,13 @@ void startServer() {
 
 int main() {
     dbInit(schema);   // Функция создания и проверки наличия БД
-    cout << "Market database ready. \n";
+    marketCfg(schema, config);
+    cout << "Market is ready. \n";
     startServer();
     return 0;
 }
 /*
 g++ client.cpp -o client
-g++ server.cpp dbms/dbms.cpp dbms/DBinit.cpp dbms/syntaxCheck.cpp dbms/actions.cpp -o server
+g++ server.cpp dbms/DBinit.cpp config.cpp market.cpp dbms/dbms.cpp  dbms/syntaxCheck.cpp dbms/actions.cpp -o server
 
 */

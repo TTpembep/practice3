@@ -5,9 +5,10 @@ bool isUnlocked(const string& schemaName, const string& tableName){
     if(!fin.is_open()) {    
         cout << "File "+ schemaName+"/"+tableName+"/"+tableName+"_lock not found. " <<endl;
         return 0;
-    };
+    }
     string lockStatus;
     getline(fin,lockStatus);
+    fin.close();
     if (lockStatus == "0"){
         return 1;
     }else {
@@ -16,12 +17,12 @@ bool isUnlocked(const string& schemaName, const string& tableName){
     }
 }
 void lock(const string& schemaName, const string& tableName){
-    std::ofstream outputFile(schemaName+"/"+tableName+"/"+tableName+"_lock");
+    ofstream outputFile(schemaName+"/"+tableName+"/"+tableName+"_lock");
     outputFile << "1";
     outputFile.close();
 }
 void unlock(const string& schemaName, const string& tableName){
-    std::ofstream outputFile(schemaName+"/"+tableName+"/"+tableName+"_lock");
+    ofstream outputFile(schemaName+"/"+tableName+"/"+tableName+"_lock");
     outputFile << "0";
     outputFile.close();
 }
