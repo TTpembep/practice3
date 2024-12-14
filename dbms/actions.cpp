@@ -71,6 +71,7 @@ void insertCSV(const Schema& schema, SQLQuery& query) {
         query.message = "File " + filePath + " not found. ";
         return;
     };
+    if (query.tableName == "user_lot"){ rowCount += 1;}
     int columnCount =0;
     string columnName;
     getline(fin,columnName);
@@ -88,7 +89,9 @@ void insertCSV(const Schema& schema, SQLQuery& query) {
     //а не перезаписывать его.
     ofstream outfile(filePath, ios::app);   //Открываем файл для добавления
     if (outfile.is_open()) {
-        outfile << primaryKey << ",";   //Добавляем первичный ключ как первую колонку
+        if (query.tableName != "user_lot"){
+            outfile << primaryKey << ",";   //Добавляем первичный ключ как первую колонку
+        }
         for (Node* current = query.values->head; current != nullptr; current = current->next) {
             outfile << current->data;   //Добавляем остальные значения
             if (current->next != nullptr) {
@@ -97,7 +100,9 @@ void insertCSV(const Schema& schema, SQLQuery& query) {
         }
         outfile << endl;    //Закрываем файл
         outfile.close();    //Обновляем первичный ключ в файле
-        updatePrimaryKey(schema.name+"/"+query.tableName+"/"+query.tableName, primaryKey + 1);
+        if (query.tableName != "user_lot"){
+            updatePrimaryKey(schema.name+"/"+query.tableName+"/"+query.tableName, primaryKey + 1);
+        }
         query.message = "Database updated succesfully. Path: " + filePath;
     } else {
         query.message = "An error occured when opening file " + filePath;
@@ -320,7 +325,7 @@ void selectTables(const Schema& schema, SQLQuery& query){
             if (infile.is_open() && iterfile.is_open()){    //Обработка второй и последующих таблиц
                 string iterRow;
                 getline(iterfile, iterRow);
-                tmpfile << iterRow + "," + curTab->data + "_pk," + curCol->data << endl;
+                tmpfile << iterRow + "," + curTab->data + "_id," + curCol->data << endl;
                 infile.close();
                 string row, columnNames;
                 while(getline(iterfile,iterRow)){
@@ -338,7 +343,7 @@ void selectTables(const Schema& schema, SQLQuery& query){
             }else if(infile.is_open()){ //Обработка первой таблицы
                 string row, columnNames;
                 getline(infile,columnNames);
-                tmpfile << curTab->data + "_pk," + curCol->data << endl;
+                tmpfile << curTab->data + "_id," + curCol->data << endl;
                 while (getline(infile, row)) { 
                     if (isConditionTrue(row, columnNames, query.line)){
                         tmpfile << superPrintFunc(row, columnNames, curCol->data) << endl;

@@ -1,7 +1,7 @@
 #include "dbms.h"
 
 string dbms(string query, Schema schema){
-    cout << "action log+\n";
+    //cout << "action log+\n";
     SQLQuery parsedQuery;
     parsedQuery = syntaxCheck(query);
     if (!parsedQuery.isRight) {

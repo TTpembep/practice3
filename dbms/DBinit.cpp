@@ -40,17 +40,19 @@ void dbInit(Schema& schema){  //Основная функция создания
         cout << "Created "+schema.name+"/"+tableName+"/"+tableName+"/1.csv" << endl;
         }
         fin.close();
-        fin.open(schema.name+"/"+tableName+"/"+tableName+"_pk_sequence");
-        if (fin.good()) {
-          cout << schema.name+"/"+tableName+"/"+tableName+"_pk_sequence is already exist!" << endl;
-        } else{
-          ofstream fout;
-          fout.open(schema.name+"/"+tableName+"/"+tableName+"_pk_sequence");
-          fout << 1;
-          fout.close();
-          cout << "Created "+schema.name+"/"+tableName+"/"+tableName+"_pk_sequence" << endl;
-        }
+        if (tableName != "user_lot"){
+          fin.open(schema.name+"/"+tableName+"/"+tableName+"_pk_sequence");
+          if (fin.good()) {
+            cout << schema.name+"/"+tableName+"/"+tableName+"_pk_sequence is already exist!" << endl;
+          } else{
+            ofstream fout;
+            fout.open(schema.name+"/"+tableName+"/"+tableName+"_pk_sequence");
+            fout << 1;
+            fout.close();
+            cout << "Created "+schema.name+"/"+tableName+"/"+tableName+"_pk_sequence" << endl;
+          }
         fin.close();
+        }
         fin.open(schema.name+"/"+tableName+"/"+tableName+"_lock");
         if (fin.good()){
           cout << schema.name+"/"+tableName+"/"+tableName+"_lock is already exist!" << endl;

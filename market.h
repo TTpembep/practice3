@@ -7,6 +7,8 @@
 
 using namespace std;
 
-string market(string message, Schema schema);
+string idFinder(string object, Schema& schema);
+string keyGen(string username, Schema& schema);
+bool isUserExists(string username, Schema& schema);
 
 #endif

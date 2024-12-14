@@ -1,5 +1,5 @@
 #include "httplib.h"
-#include <mutex>
+//#include <mutex>
 #include <thread>
 #include <map>
 #include "dbms/DBinit.h"
@@ -12,19 +12,23 @@ using namespace httplib;
 
 Schema schema;  //Глобальная структура для обработки бд
 Config config; //Глобальная конфигурация сервера
-mutex userMutex;  //Глобальный мьютекс для защиты доступа к schema
+//mutex userMutex;  //Глобальный мьютекс для защиты доступа к schema
 
-map<int, string> clientPorts;  // Хранилище для идентификации клиентов по портам
-
-void requestProcessing(const Request& req, Response& res) {
-    string clientId = req.remote_addr + ":" + to_string(req.remote_port);
-    clientPorts[req.remote_port] = clientId;
-    cout << "Client [" << req.remote_port << "] visited server. \n";
-
+void userRequestProcessing(const Request& req, Response& res) {
+    
+    cout << "Request [" << req.remote_port << "]. ";
+    cout << "User:"<< req.body <<"\n"; //Переделатб!!!!!!!!!!!!!!!!!!!
     // Вывод какой user совершает действие, или он выполняет это как гость
 
-    lock_guard<mutex> guard(userMutex);
-    string result = "Processed request: " + req.body;  // Замените на вашу логику обработки
+    //lock_guard<mutex> guard(userMutex);
+    //string result = "Processed request: " + req.body;  // Замените на вашу логику обработки
+    string result;
+    if (!isUserExists(req.body, schema)){
+        result = keyGen(req.body, schema);  // Создание нового пользователя
+        // Его баланс должен пополниться на 1000 единиц каждой валюты
+    }else {
+        result = "ERROR-user already exists";
+    }
     res.set_content(result, "text/plain");
 }
 
@@ -38,7 +42,7 @@ void startServer() {
     });
 
     // Обработка POST-запроса на маршруте "/user"
-    svr.Post("/user", requestProcessing);
+    svr.Post("/user", userRequestProcessing);
 
     // Запуск сервера на указанном порту
     cout << "Starting server on http://" << config.ip << ":" << config.port << endl;
