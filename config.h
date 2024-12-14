@@ -11,6 +11,6 @@
 using namespace std;
 using json = nlohmann::json;
 
-void marketCfg(Schema schema, Config config);   //Конфигурация маркета
+void marketCfg(Schema schema, Config& config);   //Конфигурация маркета
 
 #endif

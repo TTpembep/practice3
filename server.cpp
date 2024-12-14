@@ -1,18 +1,14 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h> //sleep func
-#include <future>
+#include "httplib.h"
 #include <mutex>
 #include <thread>
-#include <arpa/inet.h>
-#include "ip.h"
+#include <map>
 #include "dbms/DBinit.h"
 #include "dbms/structures.h"
 #include "config.h"
 #include "market.h"
-#include <map>
 
 using namespace std;
+using namespace httplib;
 
 Schema schema;  //Глобальная структура для обработки бд
 Config config; //Глобальная конфигурация сервера
@@ -20,81 +16,49 @@ mutex userMutex;  //Глобальный мьютекс для защиты до
 
 map<int, string> clientPorts;  // Хранилище для идентификации клиентов по портам
 
-void requestProcessing(const int clientSocket, const sockaddr_in& clientAddress) {
-    char receive[1024] = {};
-    string sending;
-    bool isExit = false;
-    int clientPort = ntohs(clientAddress.sin_port);
-    string clientId = inet_ntoa(clientAddress.sin_addr) + ':' + to_string(clientPort);
-    clientPorts[clientSocket] = clientId;
+void requestProcessing(const Request& req, Response& res) {
+    string clientId = req.remote_addr + ":" + to_string(req.remote_port);
+    clientPorts[req.remote_port] = clientId;
+    cout << "Client [" << req.remote_port << "] visited server. \n";
 
-    while (!isExit) {
-        bzero(receive, 1024);
-        const ssize_t userRead = read(clientSocket, receive, 1024);
-        if (userRead <= 0) {
-            cerr << "client[" << clientId << "] disconnected\n";
-            isExit = true;
-            continue;
-        }
-        if (strcmp(receive, "disconnect") == 0) {
-            isExit = true;
-            continue;
-        }
-        lock_guard<mutex> guard(userMutex);
-        string result = market(receive, schema);
-        send(clientSocket, result.c_str(), result.size(), 0);
-    }
-    close(clientSocket);
-    clientPorts.erase(clientSocket);
+    // Вывод какой user совершает действие, или он выполняет это как гость
+
+    lock_guard<mutex> guard(userMutex);
+    string result = "Processed request: " + req.body;  // Замените на вашу логику обработки
+    res.set_content(result, "text/plain");
 }
 
+// Функция для запуска сервера
 void startServer() {
-    const int server = socket(AF_INET, SOCK_STREAM, 0); // file descriptor
-    if (server == -1) {
-        cerr << "Socket creation error" << endl;
-        return;
-    }
-    sockaddr_in address{}; // IPV4 protocol structure
-    address.sin_family = AF_INET;
-    //address.sin_addr.s_addr = inet_addr(IP); // any = 0.0.0.0
-    address.sin_addr.s_addr = inet_addr(config.ip.c_str());
-    address.sin_port = htons(config.port); // host to net short
+    Server svr; // HTTP-server
 
-    if (bind(server, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) < 0) {
-        cerr << "Binding error" << endl;
-        close(server);
-        return;
-    }
-    if (listen(server, 10) == -1) {
-        cerr << "Socket listening error" << endl;
-        close(server);
-        return;
-    }
-    cout << "Server started" << endl;
+    // Обработка GET-запроса на маршруте "/hi"
+    svr.Get("/hi", [](const Request& req, Response& res) {
+        res.set_content("Hello World!", "text/plain");
+    });
 
-    sockaddr_in clientAddress{};
-    socklen_t clientAddrLen = sizeof(clientAddress);
-    while (true) {
-        int clientSocket = accept(server, reinterpret_cast<struct sockaddr *>(&clientAddress), &clientAddrLen);
-        if (clientSocket == -1) {
-            cout << "connection fail" << endl;
-            continue;
-        }
-        cout << "Client[" << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << "] was connected" << endl;
-        thread(requestProcessing, clientSocket, clientAddress).detach();
-    }
-    close(server);
+    // Обработка POST-запроса на маршруте "/user"
+    svr.Post("/user", requestProcessing);
+
+    // Запуск сервера на указанном порту
+    cout << "Starting server on http://" << config.ip << ":" << config.port << endl;
+    svr.listen(config.ip.c_str(), config.port);
 }
 
 int main() {
+    // Инициализация БД и конфигурации
     dbInit(schema);   // Функция создания и проверки наличия БД
     marketCfg(schema, config);
-    cout << "Market is ready. \n";
-    startServer();
+    cout << "Market is ready.\n";
+
+    // Запуск сервера в отдельном потоке
+    thread serverThread(startServer);
+    serverThread.join();
+
     return 0;
 }
 /*
-g++ client.cpp -o client
-g++ server.cpp dbms/DBinit.cpp config.cpp market.cpp dbms/dbms.cpp  dbms/syntaxCheck.cpp dbms/actions.cpp -o server
+g++ -o client client.cpp -lssl -lcrypto
+g++ -o server server.cpp dbms/DBinit.cpp config.cpp market.cpp dbms/dbms.cpp  dbms/syntaxCheck.cpp dbms/actions.cpp
 
 */

@@ -1,18 +1,6 @@
 #include "config.h"
 
-void marketCfg(Schema schema, Config config){  //Конфигурация маркета
-  ifstream fin(schema.name+"/pair/pair_cfgStatus");
-  if(!fin.is_open()) {    
-      cout << "File "+ schema.name+"/pair/pair_cfgStatus not found. \n";
-      return;
-  }
-  string lockStatus;
-  getline(fin,lockStatus);
-  fin.close();
-  if (lockStatus != "0"){
-    cout << "Market is already configured. \n";
-    return;
-  }
+void marketCfg(Schema schema, Config& config){  //Конфигурация маркета
   ifstream file("config.json");
   json jConfig;
   file >> jConfig;
@@ -22,7 +10,20 @@ void marketCfg(Schema schema, Config config){  //Конфигурация мар
   }
   config.ip = jConfig["database_ip"].get<string>();
   config.port = jConfig["database_port"].get<int>();
-  
+
+  ifstream fin(schema.name+"/pair/pair_cfgStatus");
+  if(!fin.is_open()) {    
+    cout << "File "+ schema.name+"/pair/pair_cfgStatus not found. \n";
+    return;
+  }
+  string lockStatus;
+  getline(fin,lockStatus);
+  fin.close();
+  if (lockStatus != "0"){
+    cout << "Market is already configured. \n";
+    return;
+  }
+
   string filePath = schema.name+"/pair/1.csv";
   while (lotsNames.head->next != nullptr){
     string first_lot = lotsNames.head->data;
