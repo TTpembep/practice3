@@ -71,7 +71,6 @@ void insertCSV(const Schema& schema, SQLQuery& query) {
         query.message = "File " + filePath + " not found. ";
         return;
     };
-    if (query.tableName == "user_lot"){ rowCount += 1;}
     int columnCount =0;
     string columnName;
     getline(fin,columnName);
@@ -79,6 +78,7 @@ void insertCSV(const Schema& schema, SQLQuery& query) {
     while(getline(ss,columnName,',')) { //Проверка на совпадение количества добавляемых
         columnCount++;                  //элементов с количеством колонок в таблице
     }
+    if (query.tableName == "user_lot"){ columnCount += 1;}
     for (Node * current = query.values->head;current!=nullptr;current=current->next,columnCount--);
     if (columnCount!=1) {
         query.message = "Insert error. Wrong amount of arguments. ";

@@ -1,8 +1,24 @@
 #include "market.h"
 
-string idFinder(string object, Schema& schema){
+string idFinder(string table, string column, string value, Schema& schema){
+    string message = "SELECT "+table +"."+column+" FROM "+table+" WHERE "+table+"."+column+" = \'"+value+"\'";
+    string dbmsResult = dbms(message, schema);
 
-
+    stringstream ss (dbmsResult);
+    string id;
+    getline(ss, id, '\n');
+    //cout << id << "\n";
+    getline(ss, id, ' ');
+    getline(ss, id, ' ');
+    getline(ss, id, ' ');
+    //cout << id << "\n";
+    //string name;
+    //getline(ss, name);
+    //name.erase(0,5);
+    //cout << name << "\n";
+    if (id != ""){
+        return id;
+    }else{return "false";}
 }
 string keyGen(string username, Schema& schema){
     // INSRET INTO user VALUES ('username', 'key')
@@ -16,23 +32,28 @@ string keyGen(string username, Schema& schema){
     string dbmsResult;
     
     dbmsResult = dbms(message, schema);
-    cout << dbmsResult << "\n";
+    //cout << dbmsResult << "\n";
 
     // user_id lot_id quantity
-
+    string user_id = idFinder("user", "username", username, schema);
+    ifstream lotFile (schema.name + "/lot/1.csv");
+    string row;
+    getline(lotFile, row);
+    while (getline(lotFile, row)){
+        stringstream ss(row);
+        string lot_id;
+        getline(ss, lot_id, ',');
+        message = "INSERT INTO user_lot VALUES (\'"+user_id+"\', \'"+lot_id+"\', \'1000\')";
+        dbmsResult = dbms(message, schema);
+    }
+    lotFile.close();
     // INSRET INTO user VALUES ('user_id', 'lot_id', 'quantity')
+    cout << ">New user created succesfully! \n";
     return key;
 }
 bool isUserExists(string username, Schema& schema){
-    // SELECT user.username FROM user WHERE username = john1
-    string message = "SELECT user.username FROM user WHERE user.username = \'" + username +"\'";
-    //cout << message << "\n";
-    string dbmsResult;
-    
-    dbmsResult = dbms(message, schema);
-    //cout << dbmsResult << "\n";
-
-    if (dbmsResult.find(username) != string::npos){
+    string id = idFinder("user", "username", username, schema);
+    if (id != "false"){
         return true;
     }else {return false;}
 }

@@ -24,7 +24,21 @@ void marketCfg(Schema schema, Config& config){  //Конфигурация ма�
     return;
   }
 
-  string filePath = schema.name+"/pair/1.csv";
+  string filePath = schema.name + "/lot/1.csv";
+  Node* curLot = lotsNames.head;
+  while (curLot != nullptr){
+    string lot = curLot->data;
+    int primaryKey = getPrimaryKey(schema.name+"/lot/lot");
+    ofstream outfile(filePath, ios::app);   //Открываем файл для добавления
+    outfile << primaryKey << "," <<  lot << endl;
+    outfile.close();  //Закрываем файл
+    //Обновляем первичный ключ в файле  
+    updatePrimaryKey(schema.name+"/lot/lot", primaryKey + 1);
+    curLot = curLot->next;
+  }
+  delete curLot;
+
+  filePath = schema.name + "/pair/1.csv";
   while (lotsNames.head->next != nullptr){
     string first_lot = lotsNames.head->data;
     Node* current = lotsNames.head;
@@ -40,6 +54,7 @@ void marketCfg(Schema schema, Config& config){  //Конфигурация ма�
       current = current->next;
     }
     lotsNames.remove_index(0);
+    delete current;
   }
 
   ofstream outputFile(schema.name+"/pair/pair_cfgStatus");

@@ -7,7 +7,7 @@
 
 using namespace std;
 
-string idFinder(string object, Schema& schema);
+string idFinder(string table, string object, string value, Schema& schema);
 string keyGen(string username, Schema& schema);
 bool isUserExists(string username, Schema& schema);
 

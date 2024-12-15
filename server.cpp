@@ -14,26 +14,20 @@ Schema schema;  //Глобальная структура для обработ�
 Config config; //Глобальная конфигурация сервера
 //mutex userMutex;  //Глобальный мьютекс для защиты доступа к schema
 
-void userRequestProcessing(const Request& req, Response& res) {
-    
-    cout << "Request [" << req.remote_port << "]. ";
-    cout << "User:"<< req.body <<"\n"; //Переделатб!!!!!!!!!!!!!!!!!!!
-    // Вывод какой user совершает действие, или он выполняет это как гость
+void userRequestProcessing(const Request& req, Response& res) { // Создание нового пользователя
+    // Вывод какой клиент совершает действие
+    cout << ">Request [" << req.remote_port << "]." << "User:"<< req.body <<"\n";
 
-    //lock_guard<mutex> guard(userMutex);
-    //string result = "Processed request: " + req.body;  // Замените на вашу логику обработки
     string result;
     if (!isUserExists(req.body, schema)){
-        result = keyGen(req.body, schema);  // Создание нового пользователя
-        // Его баланс должен пополниться на 1000 единиц каждой валюты
+        result = keyGen(req.body, schema);  
     }else {
         result = "ERROR-user already exists";
     }
     res.set_content(result, "text/plain");
 }
 
-// Функция для запуска сервера
-void startServer() {
+void startServer() {    // Функция для запуска сервера
     Server svr; // HTTP-server
 
     // Обработка GET-запроса на маршруте "/hi"
@@ -45,7 +39,7 @@ void startServer() {
     svr.Post("/user", userRequestProcessing);
 
     // Запуск сервера на указанном порту
-    cout << "Starting server on http://" << config.ip << ":" << config.port << endl;
+    cout << "-= Starting server on http://" << config.ip << ":" << config.port << " =-\n";
     svr.listen(config.ip.c_str(), config.port);
 }
 
