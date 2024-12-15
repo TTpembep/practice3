@@ -2,6 +2,7 @@
 #define INCLUDE_MARKET_H
 
 #include <string>
+#include <random>
 #include "dbms/structures.h"
 #include "dbms/dbms.h"
 

@@ -1,5 +1,4 @@
 #include "httplib.h"
-//#include <mutex>
 #include <thread>
 #include <map>
 #include "dbms/DBinit.h"
@@ -12,20 +11,6 @@ using namespace httplib;
 
 Schema schema;  //Глобальная структура для обработки бд
 Config config; //Глобальная конфигурация сервера
-//mutex userMutex;  //Глобальный мьютекс для защиты доступа к schema
-
-void userRequestProcessing(const Request& req, Response& res) { // Создание нового пользователя
-    // Вывод какой клиент совершает действие
-    cout << ">Request [" << req.remote_port << "]." << "User:"<< req.body <<"\n";
-
-    string result;
-    if (!isUserExists(req.body, schema)){
-        result = keyGen(req.body, schema);  
-    }else {
-        result = "ERROR-user already exists";
-    }
-    res.set_content(result, "text/plain");
-}
 
 void startServer() {    // Функция для запуска сервера
     Server svr; // HTTP-server
@@ -36,7 +21,38 @@ void startServer() {    // Функция для запуска сервера
     });
 
     // Обработка POST-запроса на маршруте "/user"
-    svr.Post("/user", userRequestProcessing);
+    svr.Post("/user", [](const Request& req, Response& res){    // Создание нового пользователя
+        // Вывод какой клиент совершает действие
+        cout << ">Request [" << req.remote_port << "]; " << "User:"<< req.body <<"\n";
+
+        string result;
+        if (!isUserExists(req.body, schema)){
+            result = keyGen(req.body, schema);  
+        }else {
+            result = "ERROR-user already exists";
+        }
+        res.set_content(result, "text/plain");
+    });
+
+    svr.Get("/lot", [](const Request& req, Response& res){
+        cout << ">Request [" << req.remote_port << "]; /lots\n";
+        string result;
+
+        ifstream inFile(schema.name+"/lot/1.csv");
+        string row;
+        getline(inFile, row);
+        while (getline(inFile, row)){
+            stringstream ss(row);
+            string temp;
+            getline(ss, temp, ',');
+            result += "\t{\n\t\t\"lot_id\": " + temp + ",\n";
+            getline(ss,temp);
+            result += "\t\t\"name\": " + temp + "\n\t},\n";
+        }
+        inFile.close();
+
+        res.set_content(result, "text/plain");
+    });
 
     // Запуск сервера на указанном порту
     cout << "-= Starting server on http://" << config.ip << ":" << config.port << " =-\n";

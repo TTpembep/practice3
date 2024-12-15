@@ -22,18 +22,17 @@ string idFinder(string table, string column, string value, Schema& schema){
 }
 string keyGen(string username, Schema& schema){
     // INSRET INTO user VALUES ('username', 'key')
-    size_t hash = 0;
-    for (char letter : username) {   //Вычисляет значение ключа в таблице
-         hash = hash * 32 + letter;
-    }
-    string key = to_string(hash % 100000000);
+    random_device rd;   // Генерация случайного ключа
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(10000000, 99999999); // Задан диапазон
+    string key = to_string(dis(gen));
+
     string message = "INSERT INTO user VALUES (\'"+ username + "\', \'" + key + "\')";
     //cout << message << "\n";
     string dbmsResult;
     
     dbmsResult = dbms(message, schema);
     //cout << dbmsResult << "\n";
-
     // user_id lot_id quantity
     string user_id = idFinder("user", "username", username, schema);
     ifstream lotFile (schema.name + "/lot/1.csv");

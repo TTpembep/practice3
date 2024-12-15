@@ -1,5 +1,12 @@
 #include "config.h"
 
+void lotAdd(string lot, string schemaName){
+  int lotPrimaryKey = getPrimaryKey(schemaName+"/lot/lot");
+  ofstream lotFile(schemaName + "/lot/1.csv", ios::app);   // Открываем файл для добавления
+  lotFile << lotPrimaryKey << "," <<  lot << endl;
+  lotFile.close();  // Закрываем файл
+  updatePrimaryKey(schemaName+"/lot/lot", lotPrimaryKey + 1);  // Обновляем первичный ключ в файле  
+}
 void marketCfg(Schema schema, Config& config){  //Конфигурация маркета
   ifstream file("config.json");
   json jConfig;
@@ -24,38 +31,27 @@ void marketCfg(Schema schema, Config& config){  //Конфигурация ма�
     return;
   }
 
-  string filePath = schema.name + "/lot/1.csv";
-  Node* curLot = lotsNames.head;
-  while (curLot != nullptr){
-    string lot = curLot->data;
-    int primaryKey = getPrimaryKey(schema.name+"/lot/lot");
-    ofstream outfile(filePath, ios::app);   //Открываем файл для добавления
-    outfile << primaryKey << "," <<  lot << endl;
-    outfile.close();  //Закрываем файл
-    //Обновляем первичный ключ в файле  
-    updatePrimaryKey(schema.name+"/lot/lot", primaryKey + 1);
-    curLot = curLot->next;
-  }
-  delete curLot;
-
-  filePath = schema.name + "/pair/1.csv";
   while (lotsNames.head->next != nullptr){
     string first_lot = lotsNames.head->data;
+    lotAdd(first_lot, schema.name);
+
     Node* current = lotsNames.head;
     current = current->next;
     while (current != nullptr) {
       string second_lot = current->data;
       int primaryKey = getPrimaryKey(schema.name+"/pair/pair");
-      ofstream outfile(filePath, ios::app);   //Открываем файл для добавления
+      ofstream outfile(schema.name + "/pair/1.csv", ios::app);   //Открываем файл для добавления
       outfile << primaryKey << "," << first_lot << "," << second_lot << endl;
-      outfile.close();  //Закрываем файл
-      //Обновляем первичный ключ в файле  
+      outfile.close();
       updatePrimaryKey(schema.name+"/pair/pair", primaryKey + 1);
       current = current->next;
     }
     lotsNames.remove_index(0);
     delete current;
   }
+
+  string last_lot = lotsNames.head->data;
+  lotAdd(last_lot, schema.name);
 
   ofstream outputFile(schema.name+"/pair/pair_cfgStatus");
   outputFile << "1";

@@ -31,13 +31,21 @@ int main() {
             Client cli("127.0.0.1", 7432);
             auto res = cli.Post(path, username, "application/x-www-form-urlencoded");
             if (res) {
-                //cout << ">Status: " << res->status << "\n";
-                //cout << ">Body: " << res->body << "\n";
                 cout << res->body << "\n";
-            } else {
+            }else {
                 cout << ">ERROR: Request failed. \n";
             }
             cout << "}\n";
+        }else if(action == "GET" && path == "/lot"){
+            cout << ">Response\n[\n";
+            Client cli("127.0.0.1", 7432);
+            auto res = cli.Get(path);
+            if (res) {
+                cout << res->body << "\n";
+            }else {
+                cout << ">ERROR: Request failed. \n";
+            }
+            cout << "]\n";
         }else if (action == "EXIT"){
             cout << ">Bye, bye! <3\n";
             return 0;
