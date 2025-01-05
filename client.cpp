@@ -19,17 +19,59 @@ int main() {
         string action, path;
         stringstream ss(request);
         getline(ss, action,  ' ');
-        getline(ss, path);
-        if (action == "POST" && path == "/user"){
-            cout << "{\n\t\"username\": ";
-            string username;
-            getline(cin, username);
-            cout << "}\n";
-            //cout << ">DEBUG:   " << username << "\n";
+        getline(ss, path, ' ');
+        if (action == "POST" && path == "/user"){   // POST /user username=john1
+            string requestBody;
+            getline(ss, requestBody);
 
-            cout << ">Response\n{\n\t\"key\":";
             Client cli("127.0.0.1", 7432);
-            auto res = cli.Post(path, username, "application/x-www-form-urlencoded");
+            auto res = cli.Post(path, requestBody, "application/x-www-form-urlencoded");
+            if (res) {
+                cout << res->body << "\n";
+            }else {
+                cout << ">ERROR: Request failed. \n";
+            }
+
+        }else if (action == "POST" && path == "/order"){
+            cout << "\nX-USER-KEY: ";
+            string request;
+            getline(cin, request);
+            request += ",";
+            cout << "\n{\n";
+            cout << "\t\"pair_id\": ";
+            string temp;
+            getline(cin, temp); // int
+            if (temp[temp.length() - 1] != ','){
+                cout << ">DEBUG: syntax error\n";
+                continue;
+            }
+            request += temp;
+            cout << "\t\"quantity\": ";
+            getline(cin, temp); // float
+            if (temp[temp.length() - 1] != ','){
+                cout << ">DEBUG: syntax error\n";
+                continue;
+            }
+            request += temp;
+            cout << "\t\"price\": ";
+            getline(cin, temp); // float
+            if (temp[temp.length() - 1] != ','){
+                cout << ">DEBUG: syntax error\n";
+                continue;
+            }
+            request += temp;
+            cout << "\t\"type\": ";
+            getline(cin, temp); //"sell" || "buy"
+            if (temp != "sell" && temp != "buy"){
+                cout << ">DEBUG: syntax error\n";
+                continue;
+            }
+            request += temp;
+            cout << "}\n";
+            //cout << ">DEBUG:   \n\n" << request << "\n\n";
+            cout << ">Response\n{\n\t\"order_id\":";
+            Client cli("127.0.0.1", 7432);
+            auto res = cli.Post(path, request, "application/x-www-form-urlencoded");
             if (res) {
                 cout << res->body << "\n";
             }else {

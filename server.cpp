@@ -22,20 +22,40 @@ void startServer() {    // Функция для запуска сервера
 
     // Обработка POST-запроса на маршруте "/user"
     svr.Post("/user", [](const Request& req, Response& res){    // Создание нового пользователя
-        // Вывод какой клиент совершает действие
-        cout << ">Request [" << req.remote_port << "]; " << "User:"<< req.body <<"\n";
+        // Вывод идентификатора запроса и его содержания
+        cout << ">Recieved POST /user request [" << req.remote_port << "]; " << req.body <<"\n";
 
-        string result;
-        if (!isUserExists(req.body, schema)){
-            result = keyGen(req.body, schema);  
-        }else {
-            result = "ERROR-user already exists";
+        string result = "Response\n{\n\t";
+        for (auto p : req.params) {
+            if (p.first == "username"){
+                if(!isUserExists(p.second, schema)){
+                    result += "\"key\": \"" + keyGen(p.second, schema) + "\"";
+                }else {
+                    result += "ERROR: User already exists.";
+                }
+            }else{
+                result += "ERROR: Wrong syntax.";
+            }
         }
+        result += "\n}";
+        res.set_content(result, "text/plain");
+    });
+
+    svr.Post("/order", [](const Request& req, Response& res){
+        cout << ">Request [" << req.remote_port << "]; /order\n";
+        string user_id, pair_id, quantity, price, type;
+        // 6912,21,300,0.015,sell
+        stringstream ss (req.body);
+        string temp;
+        getline(ss, temp, ',');
+
+
+        string result = "NULL";
         res.set_content(result, "text/plain");
     });
 
     svr.Get("/lot", [](const Request& req, Response& res){
-        cout << ">Request [" << req.remote_port << "]; /lots\n";
+        cout << ">Request [" << req.remote_port << "]; /lot\n";
         string result;
 
         ifstream inFile(schema.name+"/lot/1.csv");
@@ -74,5 +94,5 @@ int main() {
 /*
 g++ -o client client.cpp -lssl -lcrypto
 g++ -o server server.cpp dbms/DBinit.cpp config.cpp market.cpp dbms/dbms.cpp  dbms/syntaxCheck.cpp dbms/actions.cpp
-
+http://127.0.0.1:7432/show?john=1&aboba=dir
 */
