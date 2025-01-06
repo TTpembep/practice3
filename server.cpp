@@ -17,7 +17,7 @@ void startServer() {    // Функция для запуска сервера
 
     // Обработка GET-запроса на маршруте "/hi"
     svr.Get("/hi", [](const Request& req, Response& res) {
-        res.set_content("Hello World!", "text/plain");
+        res.set_content("Hello World!\n", "text/plain");
     });
 
     // Обработка POST-запроса на маршруте "/user"
@@ -25,38 +25,100 @@ void startServer() {    // Функция для запуска сервера
         // Вывод идентификатора запроса и его содержания
         cout << ">Recieved POST /user request [" << req.remote_port << "]; " << req.body <<"\n";
 
-        string result = "Response\n{\n\t";
+        string result = "Response\n{\n";
         for (auto p : req.params) {
             if (p.first == "username"){
                 if(!isUserExists(p.second, schema)){
-                    result += "\"key\": \"" + keyGen(p.second, schema) + "\"";
+                    result += "\t\"key\": \"" + keyGen(p.second, schema) + "\"\n";
                 }else {
-                    result += "ERROR: User already exists.";
+                    result += "\tERROR: User already exists.\n";
+                    cout << "ERROR: User already exists.\n" ;
                 }
             }else{
-                result += "ERROR: Wrong syntax.";
+                result += "\tERROR: Wrong syntax.\n";
+                cout << "ERROR: Wrong syntax.\n";
+                break;
             }
         }
-        result += "\n}";
+        result += "}\n";
         res.set_content(result, "text/plain");
     });
 
     svr.Post("/order", [](const Request& req, Response& res){
-        cout << ">Request [" << req.remote_port << "]; /order\n";
-        string user_id, pair_id, quantity, price, type;
-        // 6912,21,300,0.015,sell
-        stringstream ss (req.body);
-        string temp;
-        getline(ss, temp, ',');
+        // Вывод идентификатора запроса и его содержания
+        cout << ">Recieved POST /order request [" << req.remote_port << "]; " << req.body <<"\n";
+        // POST /order?x-user-key=string&pair_id=int&quantity=float&price=float&type=sell
+        string user_id, pair_id, type;
+        float quantity, price;
+        // 6912,---,21,300,0.015,sell
 
+        string result = "Response\n{\n";
+        string syntaxError = "";
 
-        string result = "NULL";
+        for (auto p : req.params) {
+            if (p.first == "x-user-key"){
+                user_id = idFinder("user", "key", p.second, schema);
+                if (user_id != "false"){
+                    continue;
+                }else{
+                    result += "\tERROR: Wrong x-user-key.\n";
+                    syntaxError = "ERROR: Wrong x-user-key.\n";
+                    break;
+                }
+            }else if(p.first == "pair_id"){
+                pair_id = idFinder("pair", "pair_id", p.second, schema);
+                if (user_id != "false"){
+                    continue;
+                }else{
+                    result += "\tERROR: Wrong pair_id.\n";
+                    syntaxError = "ERROR: Wrong pair_id.\n";
+                    break;
+                }
+            }else if(p.first == "quantity"){
+                quantity = convertToFloat(p.second);
+                if (quantity != 0.0f || p.second == "0" || p.second == "0.0") {
+                    continue;
+                }else{
+                    result += "\tERROR: Invalid quantity variable type.\n";
+                    syntaxError = "ERROR: Invalid quantity variable type.\n";
+                    break;
+                }
+            }else if(p.first == "price"){
+                price = convertToFloat(p.second);
+                if (price != 0.0f || p.second == "0" || p.second == "0.0") {
+                    continue;
+                }else{
+                    result += "\tERROR: Invalid price variable type.\n";
+                    syntaxError = "ERROR: Invalid price variable type.\n";
+                    break;
+                }
+            }else if(p.first == "type"){
+                type = p.second;
+                if (type == "sell" || type == "buy"){
+                    continue;
+                }
+                else{
+                    result += "\tERROR: Invalid order type.\n";
+                    syntaxError = "ERROR: Invalid order type.\n";
+                    break;
+                }
+            }else{
+                result += "\tERROR: Wrong syntax.\n";
+                syntaxError = "ERROR: Wrong syntax.\n";
+                break;
+            }
+        }
+        if (syntaxError == ""){
+
+        }
+
+        result += "}\n";
         res.set_content(result, "text/plain");
     });
 
     svr.Get("/lot", [](const Request& req, Response& res){
-        cout << ">Request [" << req.remote_port << "]; /lot\n";
-        string result;
+        cout << ">Recieved GET /lot request [" << req.remote_port << "];\n";
+        string result = "Response\n[\n";
 
         ifstream inFile(schema.name+"/lot/1.csv");
         string row;
@@ -70,7 +132,7 @@ void startServer() {    // Функция для запуска сервера
             result += "\t\t\"name\": " + temp + "\n\t},\n";
         }
         inFile.close();
-
+        result += "]\n";
         res.set_content(result, "text/plain");
     });
 
@@ -94,5 +156,11 @@ int main() {
 /*
 g++ -o client client.cpp -lssl -lcrypto
 g++ -o server server.cpp dbms/DBinit.cpp config.cpp market.cpp dbms/dbms.cpp  dbms/syntaxCheck.cpp dbms/actions.cpp
+
 http://127.0.0.1:7432/show?john=1&aboba=dir
+
+curl http://127.0.0.1:7432/hi
+curl http://127.0.0.1:7432/lot
+curl -d 'username=john1' http://127.0.0.1:7432/user
+curl -d 'x-user-key=62938913&pair_id=19&quantity=300&price=0.015&type=sell' http://127.0.0.1:7432/order
 */

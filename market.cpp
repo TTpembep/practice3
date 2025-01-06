@@ -1,5 +1,18 @@
 #include "market.h"
 
+float convertToFloat(const string& str) {
+    try {
+        return stof(str);
+    } catch (const invalid_argument& e) {
+        cerr << "Invalid argument: " << e.what() << endl;
+    } catch (const out_of_range& e) {
+        cerr << "Out of range: " << e.what() << endl;
+    } catch (const exception& e) {
+        cerr << "Exception: " << e.what() << endl;
+    }
+    return 0.0f; // Возвращаем 0.0f в случае ошибки
+}
+
 string idFinder(string table, string column, string value, Schema& schema){
     string message = "SELECT "+table +"."+column+" FROM "+table+" WHERE "+table+"."+column+" = \'"+value+"\'";
     string dbmsResult = dbms(message, schema);
@@ -47,7 +60,7 @@ string keyGen(string username, Schema& schema){
     }
     lotFile.close();
     // INSRET INTO user VALUES ('user_id', 'lot_id', 'quantity')
-    cout << ">New user created succesfully! \n";
+    cout << "New user created succesfully! \n";
     return key;
 }
 bool isUserExists(string username, Schema& schema){
