@@ -11,7 +11,7 @@
 using namespace std;
 using json = nlohmann::json;
 
-void lotAdd(string lot, string schemaName); // Добавление лота в таблицу
+string lotAdd(string lot, string schemaName); // Добавление лота в таблицу
 void marketCfg(Schema schema, Config& config);   // Конфигурация маркета
 
 #endif

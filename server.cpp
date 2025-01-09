@@ -50,7 +50,6 @@ void startServer() {    // Функция для запуска сервера
         // POST /order?x-user-key=string&pair_id=int&quantity=float&price=float&type=sell
         string user_id, pair_id, type;
         float quantity, price;
-        // 6912,---,21,300,0.015,sell
 
         string result = "Response\n{\n";
         string syntaxError = "";
@@ -109,9 +108,10 @@ void startServer() {    // Функция для запуска сервера
             }
         }
         if (syntaxError == ""){
-
+            string order_id;
+            order_id = createOrder(user_id, pair_id, quantity, price, type, schema);
+            result += "\t\"order_id\": " + order_id + "\n";
         }
-
         result += "}\n";
         res.set_content(result, "text/plain");
     });
@@ -162,5 +162,5 @@ http://127.0.0.1:7432/show?john=1&aboba=dir
 curl http://127.0.0.1:7432/hi
 curl http://127.0.0.1:7432/lot
 curl -d 'username=john1' http://127.0.0.1:7432/user
-curl -d 'x-user-key=62938913&pair_id=19&quantity=300&price=0.015&type=sell' http://127.0.0.1:7432/order
+curl -d 'x-user-key=62938913&pair_id=21&quantity=300&price=0.015&type=sell' http://127.0.0.1:7432/order
 */

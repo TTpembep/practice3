@@ -1,7 +1,7 @@
 pair_id,first_lot_id,second_lot_id
-19,RUB,BTC
-20,RUB,ETH
-21,RUB,USDT
-22,BTC,ETH
-23,BTC,USDT
-24,ETH,USDT
+19,8,9
+20,8,10
+21,8,11
+22,9,10
+23,9,11
+24,10,11
