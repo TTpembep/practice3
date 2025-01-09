@@ -21,10 +21,9 @@ int main() {
         getline(ss, path, '?');
         // POST /user?username=john1&smth=value
         // POST /order?x-user-key=string&pair_id=int&quantity=float&price=float&type=sell
+        string requestBody;
+        getline(ss, requestBody);
         if (action == "POST" && (path == "/user" || path == "/order")){ 
-            string requestBody;
-            getline(ss, requestBody);
-
             Client cli("127.0.0.1", 7432);
             auto res = cli.Post(path, requestBody, "application/x-www-form-urlencoded");
             if (res) {
@@ -32,8 +31,11 @@ int main() {
             }else {
                 cout << ">ERROR: Request failed. \n";
             }
-        }else if(action == "GET" && (path == "/order" || path == "/lot" || path == "/pair")){ // GET /balance - ???
+        }else if(action == "GET" && (path == "/order" || path == "/lot" || path == "/pair" || path == "/balance")){
             Client cli("127.0.0.1", 7432);
+            if (path == "/balance") {
+                path += "?" + requestBody;
+            }
             auto res = cli.Get(path);
             if (res) {
                 cout << res->body;

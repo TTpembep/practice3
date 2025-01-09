@@ -48,11 +48,11 @@ void startServer() {    // Функция для запуска сервера
         // Вывод идентификатора запроса и его содержания
         cout << ">Recieved POST /order request [" << req.remote_port << "]; " << req.body <<"\n";
         // POST /order?x-user-key=string&pair_id=int&quantity=float&price=float&type=sell
-        string user_id, pair_id, type;
+        string user_id, pair_id, type, syntaxError;
         float quantity, price;
 
         string result = "Response\n{\n";
-        string syntaxError = "";
+        //string syntaxError = "";
 
         for (auto p : req.params) {
             if (p.first == "x-user-key"){
@@ -132,6 +132,73 @@ void startServer() {    // Функция для запуска сервера
             result += "\t\t\"name\": " + temp + "\n\t},\n";
         }
         inFile.close();
+        result += "]\n";
+        res.set_content(result, "text/plain");
+    });
+    svr.Get("/pair", [](const Request& req, Response& res){
+        cout << ">Recieved GET /pair request [" << req.remote_port << "];\n";
+        string result = "Response\n[\n";
+
+        ifstream inFile(schema.name+"/pair/1.csv");
+        string row;
+        getline(inFile, row);
+        while (getline(inFile, row)){
+            stringstream ss(row);
+            string temp;
+            getline(ss, temp, ',');
+            result += "\t{\n\t\t\"pair_id\": " + temp + ",\n";
+            getline(ss,temp, ',');
+            result += "\t\t\"sale_lot_id\": " + temp + ",\n";
+            getline(ss,temp);
+            result += "\t\t\"buy_lot_id\": " + temp + "\n\t},\n";
+        }
+        inFile.close();
+        result += "]\n";
+        res.set_content(result, "text/plain");
+    });
+    svr.Get("/balance", [](const Request& req, Response& res){
+        cout << ">Recieved GET /balance request [" << req.remote_port << "];\n";
+
+        string user_id, syntaxError;
+        string result = "Response\n[\n";
+
+        for (auto p : req.params) {
+            if (p.first == "x-user-key"){
+                user_id = idFinder("user", "key", p.second, schema);
+                if (user_id != "false"){
+                    continue;
+                }else{
+                    result += "\tERROR: Wrong x-user-key.\n";
+                    syntaxError = "ERROR: Wrong x-user-key.\n";
+                    break;
+                }
+            }else{
+                result += "\tERROR: Wrong syntax.\n";
+                syntaxError = "ERROR: Wrong syntax.\n";
+                break;
+            }
+        }
+        if (syntaxError == ""){
+            ifstream inFile(schema.name+"/user_lot/1.csv");
+            string row;
+            getline(inFile, row);
+            while (getline(inFile, row)){
+                stringstream ss(row);
+                string idFromFile, temp;
+                getline(ss, idFromFile, ',');
+                if (idFromFile == user_id){
+                    getline(ss,temp, ',');
+                    result += "\t{\n\t\t\"lot_id\": " + temp + ",\n";
+                    getline(ss,temp);
+                    result += "\t\t\"quantity\": " + temp + "\n\t},\n";
+                }
+            }
+            inFile.close();
+        }
+        if (result == "Response\n[\n"){
+            result += "\tERROR: Wrong syntax.\n";;
+        }
+
         result += "]\n";
         res.set_content(result, "text/plain");
     });

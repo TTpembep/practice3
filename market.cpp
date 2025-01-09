@@ -96,9 +96,10 @@ string createOrder(string user_id, string pair_id, float quantity, float price, 
     //string first_lot = valFinder("lot", "name", "lot_id", first_lot_id, schema);
     //string second_lot = valFinder("lot", "name", "lot_id", second_lot_id, schema);
     //cout << first_lot << " " << second_lot << " DEBUG \n";
-    string inject = user_id + "\' AND user_lot.lot_id = \'" + second_lot_id;
+    
     //string message = "SELECT user_lot.quantity FROM user_lot WHERE user_lot.user_id = \'" + user_id + "\' AND user_lot.lot_id = \'" + second_lot_id + "\'";
     //string dbmsResult = dbms(message, schema);
+    string inject = user_id + "\' AND user_lot.lot_id = \'" + second_lot_id;
     float user_quantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
     if (user_quantity < reqCrncy){
         cout << "ERROR: Lot balance is not enough\n";
