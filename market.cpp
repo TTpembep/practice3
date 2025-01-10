@@ -87,25 +87,42 @@ bool isUserExists(string username, Schema& schema){
     }else {return false;}
 }
 string createOrder(string user_id, string pair_id, float quantity, float price, string type, Schema& schema){
-    // 16, 21, 300, 0.015, sell
-    float reqCrncy = price * quantity;  // Required amount of currency
-
+    // 16, 21, 300, 0.015, buy
+    
     //string first_lot_id = valFinder("pair", "first_lot_id", "pair_id", pair_id, schema);
-    string second_lot_id = valFinder("pair", "second_lot_id", "pair_id", pair_id, schema);
     //cout << first_lot_id << " " << second_lot_id << " DEBUG \n";
     //string first_lot = valFinder("lot", "name", "lot_id", first_lot_id, schema);
     //string second_lot = valFinder("lot", "name", "lot_id", second_lot_id, schema);
     //cout << first_lot << " " << second_lot << " DEBUG \n";
-    
     //string message = "SELECT user_lot.quantity FROM user_lot WHERE user_lot.user_id = \'" + user_id + "\' AND user_lot.lot_id = \'" + second_lot_id + "\'";
     //string dbmsResult = dbms(message, schema);
-    string inject = user_id + "\' AND user_lot.lot_id = \'" + second_lot_id;
+
+    float reqCrncy;  // Required amount of currency
+    string req_lot_id;
+    if (type == "buy"){
+        reqCrncy = price * quantity;
+        req_lot_id = valFinder("pair", "second_lot_id", "pair_id", pair_id, schema);
+    }else if (type == "sell"){
+        reqCrncy = quantity;
+        req_lot_id = valFinder("pair", "first_lot_id", "pair_id", pair_id, schema);
+    }
+    string inject = user_id + "\' AND user_lot.lot_id = \'" + req_lot_id;
     float user_quantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
-    if (user_quantity < reqCrncy){
+
+    if (user_quantity < reqCrncy){  //Проверка что активов пользователя достаточно создания ордера
         cout << "ERROR: Lot balance is not enough\n";
         return "\tERROR: Lot balance is not enough\n";
     }
 
+    //UPDATE user_lot SET quantity = 'new_quantity' WHERE user_lot.user_id = 'user_id' AND user_lot.lot_id = 'req_lot_id'
+    //UPDATE order SET quantity = 'new_quantity', price = 'new_price', closed = 'time' WHERE order.order_id = 'that_order_id'
+
+    //string message = "UPDATE user_lot SET quantity = '666' WHERE user_lot.user_id = '18' AND user_lot.lot_id = '11'";
+    string message = "UPDATE order SET quantity = '200', price = '0.01', closed = '420' WHERE order.order_id = '0'";
+    string dbmsResult = dbms(message, schema);
+    cout << dbmsResult << endl;
+    //order_id,user_id,pair_id,quantity,price,type,closed
+    //0,12,21,300,0.015,buy,-
 
 
 

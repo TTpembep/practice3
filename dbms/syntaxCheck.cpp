@@ -148,7 +148,82 @@ SQLQuery syntaxCheck(string query){
             }
             counter++;
         }//PARCER END
+        return temp;
+    }
+    //SELECT table1.column1 table2.column1 FROM table1, table2 WHERE table1.column1 = 'disco' OR table2.column1 = 'wiki'
+    //UPDATE user_lot SET quantity = 'new_quantity' WHERE user_lot.user_id = 'user_id' AND user_lot.lot_id = 'req_lot_id'
+    //UPDATE order SET quantity = 'new_quantity', price = 'new_price', closed = 'time' WHERE order.order_id = 'that_order_id'
+    if (temp.action == "UPDATE"){   //Проверка синтаксиса команды обновления данных в таблице
+        getline(ss, token, ' ');
+        if (isServiceWord(token)){
+            return temp;
+        }
+        temp.tableName = token;
+        getline(ss, token, ' ');    
+        if (token!="SET"){         
+            return temp;
+        }
+        temp.values = new fList();
+        while (getline(ss, token, ' ') && token != "WHERE"){
+            temp.isRight = false;
+            temp.values->push_back(token);
 
+            getline(ss, token, ' ');
+            if (token != "="){
+                return temp;
+            }
+
+            getline(ss, token, ' ');
+            if (token.find(',') != string::npos){
+                token.erase(token.length()-1,1);
+            }
+            if (token[0] == '\'' && token[token.length()-1] == '\''){
+                token.erase(0,1);
+                token.erase(token.length()-1,1);
+                temp.values->push_back(token);
+            }else{return temp;}
+
+            temp.isRight = true;
+        }
+
+        if (token!="WHERE"){
+            return temp;
+        }
+        temp.line = token;
+        getline(ss,token);  //PARCER START
+        stringstream valueSS (token);
+        string value;
+        int counter = 1;
+        while (getline(valueSS,value, ' ')){
+            temp.isRight = false;
+            if (value.find('.') != string::npos && (counter == 1 || counter == 3)){
+                temp.line += ' ' + value;
+                temp.isRight = true;
+                stringstream tempSS (value);
+                string tempVal;
+                getline(tempSS,tempVal,'.');
+                if (tempVal != temp.tableName){
+                    temp.isRight = false;
+                    return temp;
+                }
+            }
+            if (value == "=" && counter == 2){
+                temp.line += ' ' + value;
+                temp.isRight = true;
+            }
+            if (value[0] == '\'' && counter == 3){
+                value.erase(0,1);
+                value.erase(value.size()-1,1);
+                temp.line += ' ' + value;
+                temp.isRight = true;
+            }
+            if ((value == "AND" || value == "OR") && (counter == 4)){
+                temp.line += ' ' + value;
+                counter = 0;
+                temp.isRight = true;
+            }
+            counter++;
+        }//PARCER END
         return temp;
     }
     if (temp.action == "EXIT" and query == "EXIT"){ 

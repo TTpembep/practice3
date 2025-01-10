@@ -123,8 +123,8 @@ struct Schema { //Структура данных для хранения инф
 };
 struct SQLQuery {
     string action;  //Запись действия
-    string tableName;   //Запись имени таблицы при добавлении
-    fList* values;  //Запись значений INSERT
+    string tableName;   //Запись имени таблицы при добавлении, удалении и обновлении
+    fList* values;  //Запись значений для INSERT и UPDATE
     string line; //Запись строки WHERE
     fList* tables;  //Запись таблиц SELECT
     fList* columns; //Запись колонок SELECT

@@ -50,8 +50,16 @@ string dbms(string query, Schema schema){
             parsedQuery.message = "The table is not avaible now. Try again later. ";
         }
         return parsedQuery.message;
+    }if (parsedQuery.action == "UPDATE"){   //Вызов функции удаления
+        if (isUnlocked(schema.name, parsedQuery.tableName)){
+            lock(schema.name,parsedQuery.tableName);
+            updateCSV(schema, parsedQuery);
+            unlock(schema.name,parsedQuery.tableName);
+        }else{
+            parsedQuery.message = "The table is not avaible now. Try again later. ";
+        }
+        return parsedQuery.message;
     }
-    //return parsedQuery.message;
     return "This is fatal logical error message";
 }
 
@@ -81,6 +89,9 @@ SELECT table1.column1 table2.column1 FROM table1, table2 WHERE table1.column1 = 
 
 SELECT table1.column1 table2.column1 FROM table1, table2 WHERE table1.column1 = 'disco' OR table2.column1 = 'wiki'
 
-g++ client.cpp -o client
-g++ server.cpp dbms.cpp DBinit.cpp syntaxCheck.cpp actions.cpp -o server
+//UPDATE user_lot SET quantity = 'new_quantity' WHERE user_lot.user_id = 'user_id' AND user_lot.lot_id = 'req_lot_id'
+//UPDATE order SET quantity = 'new_quantity', price = 'new_price', closed = 'time' WHERE order.order_id = 'that_order_id'
+
+#outdated - g++ client.cpp -o client
+#outdated - g++ server.cpp dbms.cpp DBinit.cpp syntaxCheck.cpp actions.cpp -o server
 */

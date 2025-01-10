@@ -17,14 +17,13 @@ void updatePrimaryKey(const string& tableName, int newPrimaryKey);
 int getRowCount(const string& filePath);
 void insertCSV(const Schema& schema, SQLQuery& query);
 
-//string openedSchemeName;
-//string openedTableName;
-
 string buildConditionString(Node* node);
 bool isConditionTrue(const string& row, const string& columnNames, const string* line);
 void deleteFromCSV(const Schema& schema, SQLQuery& query);
 
 string superPrintFunc(const string& row, const string& columnNames, const string& line);
 void selectTables(const Schema& schema, SQLQuery& query);
+
+void updateCSV(const Schema& schema, SQLQuery& query);
 
 #endif

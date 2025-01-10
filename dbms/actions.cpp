@@ -386,3 +386,85 @@ void selectTables(const Schema& schema, SQLQuery& query){
     query.message = msg;
     return;
 }
+void updateCSV(const Schema& schema, SQLQuery& query){  //Обновление данных в таблице
+    openedSchemeName = schema.name;
+    openedTableName = query.tableName;
+    fileCount=1;
+    string filePath = schema.name+"/"+query.tableName+"/" +to_string(fileCount)+ ".csv";
+    ifstream infile(filePath);
+    while(infile.is_open()){
+        ofstream outfile(filePath + ".tmp", ios::out); //Открытие временного файла
+        if (infile.is_open() && outfile.is_open()) {
+            string row, columnNames;
+            getline(infile,columnNames);    //Запись строки колонок
+            outfile << columnNames << endl;
+            bool isChanged = false;
+            while (getline(infile, row)) {
+                if (!isConditionTrue(row, columnNames, query.line)) { 
+                    outfile << row << endl;    //Если условие не выполняется, записываем строку в временный файл
+                }else {
+                    //Изменяем строку и только после этого её записываем в файл
+                    //string newRow;
+                    string tempRow;
+                    Node* current = query.values->head;
+                    while (current != nullptr){
+                        string column = current->data;  //Нужная колонка
+                        string value = current->next->data; //Новое значние
+                        stringstream ss(columnNames);
+                        string columnName;
+                        int count=0;
+                        while(getline(ss,columnName,',') && columnName!=column){
+                            count++;    //Пока не дошли до нужной колонки считаем
+                        }
+                        /*
+                        ss.str(""); //Очищаем поток
+                        ss << columnNames;
+                        columnName = " ";
+                        int tempCount=0;
+                        while(getline(ss,columnName,',')){
+                            tempCount++;    
+                            if (value == columnName){   //Проверка для случая колонка=колонке
+                                stringstream temps(row);
+                                string tempVal;
+                                while (getline(temps, tempVal, ',') && count!=0){
+                                    tempCount--;
+                            }value = tempVal;
+                            }
+                        }
+                        */
+                        stringstream sss(row);
+                        string curVal;
+                        while (getline(sss, curVal,',')){
+                            if (count == 0){
+                                tempRow += value + ',';
+                            }else{
+                                tempRow += curVal + ',';
+                            }
+                            count--;    //Доходим до нужной колонки
+                            
+                        }
+                        tempRow.erase(tempRow.length()-1,1);
+                        row = tempRow;
+                        tempRow = "";
+                        current = current->next->next;
+                    }
+
+                    outfile << row << endl;  //Записываем изменённую строку
+                    isChanged = true;
+                }
+            }
+            infile.close();
+            outfile.close();
+            remove(filePath.c_str());  //Удаляем прошлый основной файл
+            rename((filePath + ".tmp").c_str(), filePath.c_str());  //Переименовываем временный в основной
+            if (isChanged) query.message = "Database updated succesfully. Path: " + filePath;
+            else query.message = "Nothing has changed. ";
+        }else {
+            query.message = "An error occured when opening file " + filePath;
+        }
+        fileCount++;    //Если файлов несколько переходит к следующему
+        filePath = schema.name+"/"+query.tableName+"/" +to_string(fileCount)+ ".csv";
+        infile.open(filePath);
+    }
+    return;
+}

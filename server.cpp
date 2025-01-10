@@ -229,5 +229,5 @@ http://127.0.0.1:7432/show?john=1&aboba=dir
 curl http://127.0.0.1:7432/hi
 curl http://127.0.0.1:7432/lot
 curl -d 'username=john1' http://127.0.0.1:7432/user
-curl -d 'x-user-key=62938913&pair_id=21&quantity=300&price=0.015&type=sell' http://127.0.0.1:7432/order
+curl -d 'x-user-key=62938913&pair_id=21&quantity=300&price=0.015&type=buy' http://127.0.0.1:7432/order
 */
