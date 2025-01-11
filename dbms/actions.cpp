@@ -103,9 +103,11 @@ void insertCSV(const Schema& schema, SQLQuery& query) {
         if (query.tableName != "user_lot"){
             updatePrimaryKey(schema.name+"/"+query.tableName+"/"+query.tableName, primaryKey + 1);
         }
-        query.message = "Database updated succesfully. Path: " + filePath;
+        //query.message = "Database updated succesfully. Path: " + filePath;
+        query.message = to_string(primaryKey);
     } else {
-        query.message = "An error occured when opening file " + filePath;
+        //query.message = "An error occured when opening file " + filePath;
+        query.message = "ERROR";
     }
     return;
 }
@@ -416,22 +418,6 @@ void updateCSV(const Schema& schema, SQLQuery& query){  //Обновление �
                         while(getline(ss,columnName,',') && columnName!=column){
                             count++;    //Пока не дошли до нужной колонки считаем
                         }
-                        /*
-                        ss.str(""); //Очищаем поток
-                        ss << columnNames;
-                        columnName = " ";
-                        int tempCount=0;
-                        while(getline(ss,columnName,',')){
-                            tempCount++;    
-                            if (value == columnName){   //Проверка для случая колонка=колонке
-                                stringstream temps(row);
-                                string tempVal;
-                                while (getline(temps, tempVal, ',') && count!=0){
-                                    tempCount--;
-                            }value = tempVal;
-                            }
-                        }
-                        */
                         stringstream sss(row);
                         string curVal;
                         while (getline(sss, curVal,',')){

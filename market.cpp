@@ -12,7 +12,17 @@ float convertToFloat(const string& str) {
     }
     return 0.0f; // Возвращаем 0.0f в случае ошибки
 }
-
+string floatToStr(const float& value){  //Форматирование строки из float значения
+    string result = to_string(value);
+    for (size_t i = result.length() - 1; result[i] == '0'; i--){
+        result.erase(i,1);
+        if (result[i-1] == '.'){
+            result.erase(i-1, 1);
+            break;
+        }
+    }
+    return result;
+}
 string idFinder(string table, string column, string value, Schema& schema){
     string message = "SELECT "+table +"."+column+" FROM "+table+" WHERE "+table+"."+column+" = \'"+value+"\'";
     string dbmsResult = dbms(message, schema);
@@ -36,12 +46,14 @@ string idFinder(string table, string column, string value, Schema& schema){
 string valFinder(string table, string column, string idCol, string id_, Schema& schema){
     string message = "SELECT "+table +"."+column+" FROM "+table+" WHERE "+table+"."+idCol+" = \'"+id_+"\'";
     string dbmsResult = dbms(message, schema);
+    //cout << dbmsResult << "\n";
     stringstream ss (dbmsResult);
     string id;
     getline(ss, id, '\n');
     getline(ss, id, ' ');
     getline(ss, id, ' ');
     getline(ss, id, ' ');
+    if (id == ""){return "false";}
     string name;
     getline(ss, name);
     name.erase(0,5);
@@ -51,18 +63,15 @@ string valFinder(string table, string column, string idCol, string id_, Schema& 
     }else{return "false";}
 }
 string keyGen(string username, Schema& schema){
-    // INSRET INTO user VALUES ('username', 'key')
+    // INSERT INTO user VALUES ('username', 'key')
     random_device rd;   // Генерация случайного ключа
     mt19937 gen(rd());
     uniform_int_distribution<> dis(10000000, 99999999); // Задан диапазон
     string key = to_string(dis(gen));
 
     string message = "INSERT INTO user VALUES (\'"+ username + "\', \'" + key + "\')";
-    //cout << message << "\n";
-    string dbmsResult;
-    
-    dbmsResult = dbms(message, schema);
-    //cout << dbmsResult << "\n";
+    string dbmsResult = dbms(message, schema);
+
     // user_id lot_id quantity
     string user_id = idFinder("user", "username", username, schema);
     ifstream lotFile (schema.name + "/lot/1.csv");
@@ -76,7 +85,7 @@ string keyGen(string username, Schema& schema){
         dbmsResult = dbms(message, schema);
     }
     lotFile.close();
-    // INSRET INTO user VALUES ('user_id', 'lot_id', 'quantity')
+    // INSERT INTO user VALUES ('user_id', 'lot_id', 'quantity')
     cout << "New user created succesfully! \n";
     return key;
 }
@@ -97,34 +106,40 @@ string createOrder(string user_id, string pair_id, float quantity, float price, 
     //string message = "SELECT user_lot.quantity FROM user_lot WHERE user_lot.user_id = \'" + user_id + "\' AND user_lot.lot_id = \'" + second_lot_id + "\'";
     //string dbmsResult = dbms(message, schema);
 
-    float reqCrncy;  // Required amount of currency
-    string req_lot_id;
+    float reqCrncy; // Required amount of currency
+    float userQuantity, newQuantity;  
+    string reqLotId;
     if (type == "buy"){
         reqCrncy = price * quantity;
-        req_lot_id = valFinder("pair", "second_lot_id", "pair_id", pair_id, schema);
+        reqLotId = valFinder("pair", "second_lot_id", "pair_id", pair_id, schema);
+        string inject = user_id + "\' AND user_lot.lot_id = \'" + reqLotId;
+        userQuantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
     }else if (type == "sell"){
         reqCrncy = quantity;
-        req_lot_id = valFinder("pair", "first_lot_id", "pair_id", pair_id, schema);
+        reqLotId = valFinder("pair", "first_lot_id", "pair_id", pair_id, schema);
+        string inject = user_id + "\' AND user_lot.lot_id = \'" + reqLotId;
+        userQuantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
     }
-    string inject = user_id + "\' AND user_lot.lot_id = \'" + req_lot_id;
-    float user_quantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
-
-    if (user_quantity < reqCrncy){  //Проверка что активов пользователя достаточно создания ордера
-        cout << "ERROR: Lot balance is not enough\n";
-        return "\tERROR: Lot balance is not enough\n";
+    if (userQuantity < reqCrncy){  //Проверка что активов пользователя достаточно создания ордера
+            cout << "ERROR: Lot balance is not enough\n";
+            return "\tERROR: Lot balance is not enough\n";
     }
 
-    //UPDATE user_lot SET quantity = 'new_quantity' WHERE user_lot.user_id = 'user_id' AND user_lot.lot_id = 'req_lot_id'
-    //UPDATE order SET quantity = 'new_quantity', price = 'new_price', closed = 'time' WHERE order.order_id = 'that_order_id'
-
-    //string message = "UPDATE user_lot SET quantity = '666' WHERE user_lot.user_id = '18' AND user_lot.lot_id = '11'";
-    string message = "UPDATE order SET quantity = '200', price = '0.01', closed = '420' WHERE order.order_id = '0'";
+    newQuantity = userQuantity - reqCrncy;
+    string nwQntty = floatToStr(newQuantity);    //Новое значение количества лота пользователя в string
+    //Снятие требуемого лота с баланса пользователя
+    string message = "UPDATE user_lot SET quantity = '"+nwQntty+"' WHERE user_lot.user_id = '"+user_id+"' AND user_lot.lot_id = '"+reqLotId+"'";
     string dbmsResult = dbms(message, schema);
-    cout << dbmsResult << endl;
-    //order_id,user_id,pair_id,quantity,price,type,closed
-    //0,12,21,300,0.015,buy,-
+    
+    //Если существует ордер с тем же pair_id но другого типа - проверяем цену и если что удовлетворяем частично либо полностью
+    //UPDATE order SET quantity = 'new_quantity', price = 'new_price', closed = 'time' WHERE order.order_id = 'that_order_id'
+    //string message = "UPDATE order SET quantity = '200', price = '0.01', closed = '420' WHERE order.order_id = '0'";
 
-
-
-    return "This isnt complete yet :(";
+    //Затем создаем новый ордер
+    string strQntty = floatToStr(quantity); //нужно новое значение
+    string strPrc = floatToStr(price);  //нужно новое значение
+    message = "INSERT INTO order VALUES (\'"+user_id+"\', \'"+pair_id+"\', \'"+strQntty+"\',\'"+strPrc+"\',\'"+type+"\', \'-\')";
+    dbmsResult = dbms(message, schema);
+    cout << "Created order with id: " + dbmsResult + "\n";
+    return dbmsResult;
 }

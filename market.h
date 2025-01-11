@@ -10,6 +10,7 @@
 using namespace std;
 
 float convertToFloat(const string& str);
+string floatToStr(const float& value);  //Форматирование строки из float значения
 string idFinder(string table, string object, string value, Schema& schema);
 string valFinder(string table, string column, string idCol, string id_, Schema& schema);
 string keyGen(string username, Schema& schema);

@@ -42,6 +42,15 @@ int main() {
             }else {
                 cout << ">ERROR: Request failed. \n";
             }
+        }else if(action == "DELETE" && path == "/order"){
+            Client cli("127.0.0.1", 7432);
+            path += "?" + requestBody;
+            auto res = cli.Delete(path);
+            if (res) {
+                cout << res->body;
+            }else {
+                cout << ">ERROR: Request failed. \n";
+            }
         }else if (action == "EXIT"){    // +DELETE /order - ???
             cout << ">Bye, bye! <3\n";
             return 0;
