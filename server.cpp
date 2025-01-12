@@ -109,9 +109,13 @@ void startServer() {    // Функция для запуска сервера
         }
         if (syntaxError == ""){
             if (user_id != "" && pair_id != "" && type != "" && tmpQnt != "" && tmpPrc != ""){
+                string order_ids;
+                order_ids = createOrder(user_id, pair_id, quantity, price, type, schema);
+                stringstream ss (order_ids);
                 string order_id;
-                order_id = createOrder(user_id, pair_id, quantity, price, type, schema);
-                result += "\t\"order_id\": " + order_id + "\n";
+                while (getline(ss, order_id, ' ')){
+                    result += "\t\"order_id\": " + order_id + "\n";
+                }
             }else{
                 result += "\tERROR: Wrong syntax.\n";
                 syntaxError = "ERROR: Wrong syntax.\n";
@@ -195,23 +199,19 @@ void startServer() {    // Функция для запуска сервера
                     
                     //Возвращаем лот на баланс пользователя
                     float reqCrncy; // Required amount of currency
-                    float userQuantity, newQuantity;  
+                    float userQuantity;  
                     string reqLotId;
                     if (type == "buy"){
                         reqCrncy = price * quantity;
-                        reqLotId = valFinder("pair", "second_lot_id", "pair_id", pair_id, schema);
-                        string inject = user_id + "\' AND user_lot.lot_id = \'" + reqLotId;
-                        userQuantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
+                        reqLotId = valFinder("pair", "second_lot_id", "pair_id", pair_id, schema);                 
                     }else if (type == "sell"){
                         reqCrncy = quantity;
                         reqLotId = valFinder("pair", "first_lot_id", "pair_id", pair_id, schema);
-                        string inject = user_id + "\' AND user_lot.lot_id = \'" + reqLotId;
-                        userQuantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
                     }
-                    newQuantity = userQuantity + reqCrncy;
-                    string nwQntty = floatToStr(newQuantity);    //Новое значение количества лота пользователя в string
+                    string inject = user_id + "\' AND user_lot.lot_id = \'" + reqLotId;
+                    userQuantity = stof(valFinder("user_lot", "quantity", "user_id", inject, schema));
                     //Возвращение требуемого лота на баланс пользователя
-                    string message = "UPDATE user_lot SET quantity = '"+nwQntty+"' WHERE user_lot.user_id = '"+user_id+"' AND user_lot.lot_id = '"+reqLotId+"'";
+                    string message = "UPDATE user_lot SET quantity = '"+floatToStr(userQuantity + reqCrncy)+"' WHERE user_lot.user_id = '"+user_id+"' AND user_lot.lot_id = '"+reqLotId+"'";
                     string dbmsResult = dbms(message, schema);
                     //Удаляем ордер
                     message = "DELETE FROM order WHERE order.order_id = '"+order_id+"\'";
@@ -348,10 +348,15 @@ http://127.0.0.1:7432/show?john=1&aboba=dir
 curl http://127.0.0.1:7432/hi
 curl http://127.0.0.1:7432/lot
 curl -d 'username=john1' http://127.0.0.1:7432/user
+
 curl -d 'x-user-key=62938913&pair_id=21&quantity=300&price=0.015&type=buy' http://127.0.0.1:7432/order
 
-curl -d 'x-user-key=62938913&pair_id=21&quantity=300&price=0.015&type=sell' http://127.0.0.1:7432/order
-curl -d 'x-user-key=62938913&pair_id=21&price=0.015&type=buy' http://127.0.0.1:7432/order
+curl -d 'x-user-key=52053858&pair_id=21&quantity=200&price=0.01&type=sell' http://127.0.0.1:7432/order
+
+curl -d 'x-user-key=52053858&pair_id=21&quantity=50&price=0.01&type=sell' http://127.0.0.1:7432/order
+
+curl -d 'x-user-key=97728735&pair_id=24&quantity=25&price=11&type=buy' http://127.0.0.1:7432/order
+curl -d 'x-user-key=63628484&pair_id=24&quantity=9&price=9&type=sell' http://127.0.0.1:7432/order
 
 DELETE /order?x-user-key=62938913&order_id=2
 DELETE /order?x-user-key=52053858&order_id=2

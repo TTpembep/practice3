@@ -133,17 +133,23 @@ bool isConditionTrue(const string& row, const string& columnNames, const string&
     }
     if (tokens->head->data == "WHERE") {    //Проверка на "WHERE"
         Node* andOrNode = nullptr;  //Ищем "AND" или "OR" в списке
+        fList* temp = new fList();
+        temp->push_back("WHERE");
         for (Node* current = tokens->head->next; current != nullptr; current = current->next) {
             if (current->data == "AND" || current->data == "OR") {
                 andOrNode = current;
                 break;
+            }else{
+                temp->push_back(current->data);
             }
         }
         if (andOrNode != nullptr) { //Найден оператор "AND" или "OR"
             string operatorToken = andOrNode->data;
+            andOrNode->data = "WHERE";
             //Разделяем условие на две части
-            Node* leftPart = tokens->head->next;
-            Node* rightPart = andOrNode->next;
+            //Node* leftPart = tokens->head->next;
+            Node* leftPart = temp->head;
+            Node* rightPart = andOrNode;
             //Рекурсивно проверяем левую и правую части
             bool leftResult = isConditionTrue(row, columnNames, buildConditionString(leftPart));
             bool rightResult = isConditionTrue(row, columnNames, buildConditionString(rightPart));
